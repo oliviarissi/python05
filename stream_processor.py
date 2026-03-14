@@ -120,7 +120,7 @@ def main() -> None:
     print(log.process(data), "\n")
 
     print("=== Polymorphic Processing Demo === ")
- print("Processing multiple data types through same interface...\n")
+    print("Processing multiple data types through same interface...\n")
 
     processors: List[DataProcessor] = [
         NumericProcessor(),
