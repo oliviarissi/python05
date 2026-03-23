@@ -4,22 +4,51 @@ from typing import Any, List, Dict, Union, Optional
 from abc import ABC, abstractmethod
 
 
-def DataProcessor(ABC):
+class DataProcessor(ABC):
+    """Abstract base class for all data processors."""
 
     @abstractmethod
     def validate(self, data: Any) -> bool:
+        """Check if the data is valid for this processor.
+
+        Args:
+            data (Any): The data to validate.
+
+        Returns:
+            bool: True if data is valid, False otherwise.
+        """
         pass
 
     @abstractmethod
     def process(self, data: Any) -> str:
+        """Process the data and return a formatted string.
+
+        Args:
+            data (Any): The data to process.
+
+        Returns:
+            str: Processed output as string.
+
+        Raises:
+            ValueError: If data is invalid.
+        """
         pass
 
     def format_output(self, result: str) -> str:
+        """Format the output string.
+
+        Args:
+            result (str): The processed result string.
+
+        Returns:
+            str: Formatted output.
+        """
         return f"Output: {result}"
 
 
-def NumericProcessor(DataProcessor):
-
+class NumericProcessor(DataProcessor):
+    """Processor for numeric lists."""
+    
     def validate(self, data: Any) -> bool:
         
         return isinstance(data, list) and all(isinstance(x, (int, float)) for x in data)
@@ -27,22 +56,22 @@ def NumericProcessor(DataProcessor):
     def process(self, data: Any) -> str:
         
         
-    try:
-        if not self.validate(data):
-            raise ValueError("Invalid numeric data")
-        
-        count = len(data)
-        total = sum(data)
-        avg = total / count if count else 0
+        try:
+            if not self.validate(data):
+                raise ValueError("Invalid numeric data")
+            
+            count = len(data)
+            total = sum(data)
+            avg = total / count if count else 0
 
-        result = f"Processed {count} numeric values, sum={total}, avg={avg}"
-        return super().format_output(result)
+            result = f"Processed {count} numeric values, sum={total}, avg={avg}"
+            return super().format_output(result)
 
-    except Exception as e:
-        return self.format_output(f"Error processing numeric data: {e}")
+        except Exception as e:
+            return self.format_output(f"Error processing numeric data: {e}")
 
 
-def TextProcessor(DataProcessor):
+class TextProcessor(DataProcessor):
 
     def validate(self, data: Any) -> bool:
         return isinstance(data, str)
@@ -63,13 +92,15 @@ def TextProcessor(DataProcessor):
             return self.format_output(f"Error processing text: {e}")
 
 
-def LogProcessor(DataProcessor):
+class LogProcessor(DataProcessor):
 
     def validate(self, data: Any) -> bool:
 
-        #asi include key words namiesto :(INFO ERROR)
-
-        return isinstance(data, str) and ":" in data
+        if not isinstance(data, str) or ":" not in data:
+            return False
+        
+        level = data.split(":", 1)[0].strip().upper()
+        return level in ["ERROR", "INFO", "WARNING", "DEBUG"]
 
     def process(self, data: Any) -> str:
         try:
@@ -82,8 +113,10 @@ def LogProcessor(DataProcessor):
 
             if level == "ERROR":
                 result = f"[ALERT] ERROR level detected: {message}"
+            elif level =="INFO":
+                result = f"[INFO] INFO level detected: {message}"
             else:
-                result = f"[INFO] {level} level detected: {message}"
+                result = f"[LOG] {level}: {message}"
             
             return super().format_output(result)
 
@@ -120,26 +153,22 @@ def main() -> None:
     print(log.process(data), "\n")
 
     print("=== Polymorphic Processing Demo === ")
-    print("Processing multiple data types through same interface...\n")
+    print("Processing multiple data types through same interface...")
 
-    processors: List[DataProcessor] = [
-        NumericProcessor(),
-        TextProcessor(),
-        LogProcessor(),
-    ]
+    processors: Dict[DataProcessor, Any] = {
+        NumericProcessor(): [1, 2, 3],
+        TextProcessor(): "Hello Nexus!",
+        LogProcessor(): "INFO: System ready",
+    }
 
-    inputs: List[Any] = [
-        [1, 2, 3],
-        "Hello Nexus",
-        "INFO: System ready",
-    ]
-
-    for i, (processor, data) in enumerate(zip(processors, inputs), start=1):
-        result = processor.process(data)
-        print(f"Result {i}: {result.replace('Output: ', '')}")
+    i: int  = 1
+    for processor, data in processors.items():
+        result = processor.process(data).replace("Output: ", "")
+        print(f"Result {i}: {result}")
+        i += 1
 
 
-    print("Foundation systems online. Nexus ready for advanced streams.")
+    print("\nFoundation systems online. Nexus ready for advanced streams.")
 
 if __name__ == "__main__":
     main()
