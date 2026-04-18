@@ -213,67 +213,89 @@ class LogProcessor(DataProcessor):
                 self._counter += 1
 
 
+class DataStream:
+
+    def __init__(self):
+        self.processors: list[DataProcessor] = []
+
+    def register_processor(self, proc: DataProcessor) -> None:
+        self.processors.append(proc)
+
+    def process_stream(self, stream: list[Any]) -> None:
+
+        for item in stream:
+            handled = False
+
+            for processor in self.processors:
+                if processor.validate(item):
+                    processor.ingest(item)
+                    handled = True
+                    break
+
+            if not handled:
+                print("DataStream error - "
+                      f"Can't process element in stream: {item}")
+
+    def print_processors_stats(self) -> None:
+        print("== DataStream statistics ==")
+
+        if not self.processors:
+            print("No processor found, no data")
+            return
+
+        for processor in self.processors:
+            name = processor.__class__.__name__
+            name_form = name.replace("Processor", " Processor")
+            total = processor._counter
+            remaining = len(processor._data)
+
+            print(f"{name_form}: total {total} items processed,",
+                  f"remaining {remaining} on processor")
+
+
 def main() -> None:
 
-    print("=== Code Nexus - Data Processor ===\n")
+    print("=== Code Nexus - Data Stream ===\n")
+
+    print("Initialize Data Stream...")
+    stream = DataStream()
+    stream.print_processors_stats()
 
     # Numeric Processor
-    print("Testing Numeric Processor...")
-
+    print("\nRegistering Numeric Processor\n")
     numeric = NumericProcessor()
+    stream.register_processor(numeric)
 
-    print(f"Trying to validate input '42': {numeric.validate(42)}")
-    print(f"Trying to validate input 'Hello': {numeric.validate('Hello')}")
-
-    print("Test invalid ingestion of string 'foo' without prior validation:")
-    try:
-        numeric.ingest("foo")  # type: ignore
-    except ValueError as e:
-        print(f"Got exception: {e}")
-
-    data_num = [1, 2, 3, 4, 5]
-    print(f"Processing data: {data_num}")
-    numeric.ingest(data_num)
-
-    print("Extracting 3 values...")
-    for i in range(3):
-        rank, value = numeric.output()
-        print(f"Numeric value {rank}: {value}")
-
-    # Text Processor
-    print("\nTesting Text Processor...")
-
-    text = TextProcessor()
-
-    print(f"Trying to validate input '42': {text.validate(42)}")
-
-    data_txt = ["Hello", "Nexus", "World"]
-    print(f"Processing data: {data_txt}")
-    text.ingest(data_txt)
-
-    print("Extracting 1 value...")
-    rank, value = text.output()
-    print(f"Text value {rank}: {value}")
-
-    # Log Processor
-    print("\nTesting Log Processor...")
-
-    log = LogProcessor()
-
-    print(f"Trying to validate input 'Hello': {log.validate('Hello')}")
-
-    data_log = [
-        {"log_level": "NOTICE", "log_message": "Connection to server"},
-        {"log_level": "ERROR", "log_message": "Unauthorized access!!"}
+    data = [
+        'Hello world', [3.14, -1, 2.71],
+        [{'log_level': 'WARNING',
+         'log_message': 'Telnet access! Use ssh instead'},
+         {'log_level': 'INFO', 'log_message': 'User wil is connected'}],
+        42, ['Hi', 'five']
     ]
+    print(f"Send first batch of data on stream: {data}")
+    stream.process_stream(data)
+    stream.print_processors_stats()
 
-    print(f"Processing data: {data_log}")
-    log.ingest(data_log)
+    # Other Processors
+    print("\nRegistering other data processors")
+    text = TextProcessor()
+    log = LogProcessor()
+    stream.register_processor(text)
+    stream.register_processor(log)
 
-    print("Extracting 2 values...")
+    print("Send the same batch again")
+    stream.process_stream(data)
+    stream.print_processors_stats()
+
+    print("\nConsume some elements from the data processors:",
+          "Numeric 3, Text 2, Log 1")
+    for i in range(3):
+        numeric.output()
     for i in range(2):
-        rank, value = log.output()
-        print(f"Log entry {rank}: {value}")
+        text.output()
+    log.output()
+    stream.print_processors_stats()
 
 
 if __name__ == "__main__":
