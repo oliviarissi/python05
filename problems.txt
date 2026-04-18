@@ -1,0 +1,17 @@
+EX00
+
+❌ IMPORTANT: why mypy says “list is invariant”
+
+This message:
+
+list is invariant
+Consider using Sequence instead
+
+👉 This is NOT an error in your assignment context.
+
+It just means:
+
+list[int] is NOT compatible with list[int | float]
+Python lists are strict about types
+
+But your instructor explicitly expects this kind of strict typing, so you ignore this suggestion.
