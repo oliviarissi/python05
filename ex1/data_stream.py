@@ -7,9 +7,9 @@ from abc import ABC, abstractmethod
 class DataProcessor(ABC):
     """Abstract base class for all data processors."""
 
-    def __init__(self):
-        self._data = []
-        self._counter = 0
+    def __init__(self) -> None:
+        self._data: list[tuple[int, str]] = []
+        self._counter: int = 0
 
     @abstractmethod
     def validate(self, data: Any) -> bool:
@@ -55,7 +55,7 @@ class DataProcessor(ABC):
 class NumericProcessor(DataProcessor):
     """Processor for numeric data (int, float, and lists of both)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def validate(self, data: Any) -> bool:
@@ -106,7 +106,7 @@ class NumericProcessor(DataProcessor):
 
 class TextProcessor(DataProcessor):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def validate(self, data: Any) -> bool:
@@ -153,7 +153,7 @@ class TextProcessor(DataProcessor):
 
 class LogProcessor(DataProcessor):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
 
     def validate(self, data: Any) -> bool:
